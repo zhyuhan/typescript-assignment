@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Home from "./routes/home";
+import Index from "./routes/index";
 import Root from "./routes/root";
 import Settings from "./routes/settings";
 
@@ -10,8 +10,8 @@ const router = createBrowserRouter([
         element: <Root />,
         children: [
             {
-                path: "",
-                element: <Home />,
+                index: true,
+                element: <Index />,
             },
             {
                 path: "settings",
