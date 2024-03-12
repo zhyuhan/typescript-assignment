@@ -65,3 +65,57 @@ body {
 .content {
     padding-top: 2rem;
 }
+
+.settings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.setting {
+    display: flex;
+    align-items: center;
+    border-radius: 1rem;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.setting label {
+    min-width: 30%;
+    padding: 1rem;
+    font-size: 0.8175rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.value {
+    padding: 1rem;
+}
+
+fieldset.value {
+    border: none;
+    margin: 0;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+fieldset.value label {
+    padding: 0;
+}
+
+fieldset.value input {
+    margin: 0;
+}
+
+input {
+    width: 50px;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background-color: transparent;
+    color: var(--text);
+}
+
+input:focus {
+    outline: none;
+    border-bottom: 1px solid var(--primary);
+    transition: border-bottom 0.2s;
+}
