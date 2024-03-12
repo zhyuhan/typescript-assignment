@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NotificationOptions } from "../types";
+import "../styles/settings.css";
 
 const DEFAULT_OPTIONS: NotificationOptions = {
     count: 3,
