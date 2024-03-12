@@ -1,16 +1,12 @@
-import { useState } from "react";
-import { NotificationOptions } from "../types";
+import { useNotifications } from "../components/notifications/NotificationProvider";
+import type { NotificationOptions } from "../types";
 import "../styles/settings.css";
 
-const DEFAULT_OPTIONS: NotificationOptions = {
-    count: 3,
-    position: "top-right",
-    duration: 5,
-};
-
 export default function Settings() {
-    const [options, setOptions] =
-        useState<NotificationOptions>(DEFAULT_OPTIONS);
+    const { options, dispatch } = useNotifications();
+
+    const updateOptions = (newOptions: NotificationOptions) =>
+        dispatch({ type: "UPDATE_OPTIONS", payload: newOptions });
 
     return (
         <form className="settings">
@@ -21,8 +17,9 @@ export default function Settings() {
                         id="notification-count"
                         type="number"
                         value={options.count}
+                        min={1}
                         onChange={(event) =>
-                            setOptions({
+                            updateOptions({
                                 ...options,
                                 count: parseInt(event.target.value),
                             })
@@ -45,7 +42,7 @@ export default function Settings() {
                             value="top-left"
                             checked={options.position === "top-left"}
                             onChange={(event) =>
-                                setOptions({
+                                updateOptions({
                                     ...options,
                                     position: event.target
                                         .value as NotificationOptions["position"],
@@ -61,9 +58,10 @@ export default function Settings() {
                             id="top-right"
                             name="position"
                             value="top-right"
+                            min={1}
                             checked={options.position === "top-right"}
                             onChange={(event) =>
-                                setOptions({
+                                updateOptions({
                                     ...options,
                                     position: event.target
                                         .value as NotificationOptions["position"],
@@ -81,7 +79,7 @@ export default function Settings() {
                             value="bottom-left"
                             checked={options.position === "bottom-left"}
                             onChange={(event) =>
-                                setOptions({
+                                updateOptions({
                                     ...options,
                                     position: event.target
                                         .value as NotificationOptions["position"],
@@ -99,7 +97,7 @@ export default function Settings() {
                             value="bottom-right"
                             checked={options.position === "bottom-right"}
                             onChange={(event) =>
-                                setOptions({
+                                updateOptions({
                                     ...options,
                                     position: event.target
                                         .value as NotificationOptions["position"],
@@ -120,7 +118,7 @@ export default function Settings() {
                         type="number"
                         value={options.duration}
                         onChange={(event) =>
-                            setOptions({
+                            updateOptions({
                                 ...options,
                                 duration: parseInt(event.target.value),
                             })

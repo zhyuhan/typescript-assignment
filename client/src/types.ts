@@ -4,8 +4,14 @@ export interface Notification {
     time: string;
 }
 
+export type NotificationPosition =
+    | "top-left"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-right";
+
 export interface NotificationOptions {
     count: number;
-    position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    position: NotificationPosition;
     duration: number;
 }

@@ -1,5 +1,6 @@
 :root {
     --bg: #161c2a;
+    --bg-notification: rgba(44, 49, 62);
     --primary: #8dcafe;
     --text: rgba(255, 255, 255, 1);
     --text-light: rgba(255, 255, 255, 0.6);
@@ -13,9 +14,14 @@ html {
 }
 
 body {
-    padding: 0 2rem;
+    height: 100vh;
     background-color: var(--bg);
     color: var(--text);
+}
+
+#root {
+    height: 100%;
+    padding: 0 2rem;
 }
 
 .content {
