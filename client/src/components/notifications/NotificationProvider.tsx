@@ -26,12 +26,6 @@ const reducer = (state: State, action: Action) => {
                 ),
             };
         case "REMOVE_NOTIFICATION":
-            // we should clear the timeout
-            // if the user manually removes the notification
-            if (timeouts.has(action.payload)) {
-                clearTimeout(timeouts.get(action.payload));
-                timeouts.delete(action.payload);
-            }
             return {
                 ...state,
                 notifications: state.notifications.filter(
@@ -63,9 +57,13 @@ const NotificationsContext = createContext<{
     notifications: Notification[];
     options: NotificationOptions;
     dispatch: React.Dispatch<Action>;
+    addToClearQueue: (id: string) => void;
+    removeFromClearQueue: (id: string) => void;
 }>({
     ...initialState,
     dispatch: () => null,
+    addToClearQueue: () => null,
+    removeFromClearQueue: () => null,
 });
 
 interface NotificationsProviderProps {
@@ -77,25 +75,40 @@ const SERVER_ENDPOINT = "http://localhost:9000/events";
 export function NotificationProvider({ children }: NotificationsProviderProps) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
+    const addToClearQueue = (id: string) => {
+        timeouts.set(
+            id,
+            setTimeout(() => {
+                dispatch({ type: "REMOVE_NOTIFICATION", payload: id });
+            }, state.options.duration * 1000)
+        );
+    };
+
+    const removeFromClearQueue = (id: string) => {
+        if (timeouts.has(id)) {
+            clearTimeout(timeouts.get(id));
+            timeouts.delete(id);
+        }
+    };
+
     const eventSource = new EventSource(SERVER_ENDPOINT);
     eventSource.onmessage = (event) => {
         const notification = JSON.parse(event.data) as Notification;
         dispatch({ type: "ADD_NOTIFICATION", payload: notification });
 
         // remove the notification after `duration` seconds
-        timeouts.set(
-            notification.msg_id,
-            setTimeout(() => {
-                dispatch({
-                    type: "REMOVE_NOTIFICATION",
-                    payload: notification.msg_id,
-                });
-            }, state.options.duration * 1000)
-        );
+        addToClearQueue(notification.msg_id);
     };
 
     return (
-        <NotificationsContext.Provider value={{ ...state, dispatch }}>
+        <NotificationsContext.Provider
+            value={{
+                ...state,
+                dispatch,
+                addToClearQueue,
+                removeFromClearQueue,
+            }}
+        >
             {children}
             <NotificationContainer />
         </NotificationsContext.Provider>
