@@ -65,12 +65,29 @@ const reducer = (state: State, action: Action) => {
                 timeouts.delete(action.payload);
             }
             return state;
-        case "UPDATE_OPTIONS":
+        case "UPDATE_OPTIONS": {
             saveNotificationOptions(action.payload);
+
+            // remove extra notifications if the count has decreased
+            if (action.payload.count < state.notifications.length) {
+                const notificationsToRemove = state.notifications.slice(
+                    0,
+                    -action.payload.count
+                );
+                notificationsToRemove.forEach(({ msg_id }) => {
+                    if (timeouts.has(msg_id)) {
+                        clearTimeout(timeouts.get(msg_id));
+                        timeouts.delete(msg_id);
+                    }
+                });
+            }
+
             return {
                 ...state,
+                notifications: state.notifications.slice(-action.payload.count),
                 options: action.payload,
             };
+        }
         default:
             return state;
     }
