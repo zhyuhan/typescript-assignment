@@ -1,10 +1,5 @@
-import {
-    createContext,
-    useContext,
-    useEffect,
-    useReducer,
-    useState,
-} from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
+import { useBroadcast, useSSE } from "../../utils/hooks";
 import {
     loadNotificationOptions,
     loadNotifications,
@@ -104,8 +99,9 @@ interface NotificationsProviderProps {
 const SERVER_ENDPOINT = "http://localhost:9000/events";
 
 export function NotificationProvider({ children }: NotificationsProviderProps) {
+    const { message, broadcast } = useBroadcast<Action>("notifications");
+    const notification = useSSE<Notification>(SERVER_ENDPOINT);
     const [state, dispatch] = useReducer(reducer, initialState);
-    const [channel, setChannel] = useState<BroadcastChannel | null>(null);
 
     const addToClearQueue = (id: string) => {
         timeouts.set(
@@ -116,42 +112,31 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
         );
     };
 
+    // listen for messages from other tabs
     useEffect(() => {
-        // set up a broadcast channel to communicate between tabs
-        const bc = new BroadcastChannel("notifications");
-        bc.onmessage = (event) => {
-            const action = event.data as Action;
-            dispatch(action);
+        if (!message) return;
 
-            if (action.type === "ADD_NOTIFICATION") {
-                const notification = action.payload as Notification;
-                addToClearQueue(notification.msg_id);
-            }
-        };
-        setChannel(bc);
+        dispatch(message);
 
-        // listen for notifications from the server
-        const eventSource = new EventSource(SERVER_ENDPOINT);
-        eventSource.onmessage = (event) => {
-            const notification = JSON.parse(event.data) as Notification;
-
-            dispatch({ type: "ADD_NOTIFICATION", payload: notification });
-            // broadcast the notification to other tabs
-            bc.postMessage({
-                type: "ADD_NOTIFICATION",
-                payload: notification,
-            });
-
-            // remove the notification after `duration` seconds
+        if (message.type === "ADD_NOTIFICATION") {
+            const notification = message.payload as Notification;
             addToClearQueue(notification.msg_id);
-        };
+        }
+    }, [message]);
 
-        // clean up
-        return () => {
-            eventSource.close();
-            bc.close();
-        };
-    }, []);
+    // listen for notifications from the server
+    useEffect(() => {
+        if (!notification) return;
+
+        dispatch({ type: "ADD_NOTIFICATION", payload: notification });
+        addToClearQueue(notification.msg_id);
+
+        // broadcast the notification to other tabs
+        broadcast({
+            type: "ADD_NOTIFICATION",
+            payload: notification,
+        });
+    }, [notification]);
 
     return (
         <NotificationsContext.Provider
@@ -159,7 +144,7 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
                 ...state,
                 dispatch: (action: Action) => {
                     dispatch(action);
-                    channel?.postMessage(action);
+                    broadcast(action);
                 },
                 addToClearQueue,
             }}
