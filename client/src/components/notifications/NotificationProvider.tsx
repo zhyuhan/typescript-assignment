@@ -16,6 +16,7 @@ interface State {
 type Action =
     | { type: "ADD_NOTIFICATION"; payload: Notification }
     | { type: "REMOVE_NOTIFICATION"; payload: string }
+    | { type: "PRESERVE_NOTIFICATION"; payload: string }
     | { type: "UPDATE_OPTIONS"; payload: NotificationOptions };
 
 const timeouts = new Map<string, number>();
@@ -36,6 +37,11 @@ const reducer = (state: State, action: Action) => {
             };
         }
         case "REMOVE_NOTIFICATION": {
+            if (timeouts.has(action.payload)) {
+                clearTimeout(timeouts.get(action.payload));
+                timeouts.delete(action.payload);
+            }
+
             const notifications = state.notifications.filter(
                 (notification) => notification.msg_id !== action.payload
             );
@@ -46,6 +52,12 @@ const reducer = (state: State, action: Action) => {
                 notifications,
             };
         }
+        case "PRESERVE_NOTIFICATION":
+            if (timeouts.has(action.payload)) {
+                clearTimeout(timeouts.get(action.payload));
+                timeouts.delete(action.payload);
+            }
+            return state;
         case "UPDATE_OPTIONS":
             saveNotificationOptions(action.payload);
             return {
@@ -73,12 +85,10 @@ const NotificationsContext = createContext<{
     options: NotificationOptions;
     dispatch: React.Dispatch<Action>;
     addToClearQueue: (id: string) => void;
-    removeFromClearQueue: (id: string) => void;
 }>({
     ...initialState,
     dispatch: () => null,
     addToClearQueue: () => null,
-    removeFromClearQueue: () => null,
 });
 
 interface NotificationsProviderProps {
@@ -97,13 +107,6 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
                 dispatch({ type: "REMOVE_NOTIFICATION", payload: id });
             }, state.options.duration * 1000)
         );
-    };
-
-    const removeFromClearQueue = (id: string) => {
-        if (timeouts.has(id)) {
-            clearTimeout(timeouts.get(id));
-            timeouts.delete(id);
-        }
     };
 
     useEffect(() => {
@@ -130,7 +133,6 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
                 ...state,
                 dispatch,
                 addToClearQueue,
-                removeFromClearQueue,
             }}
         >
             {children}
