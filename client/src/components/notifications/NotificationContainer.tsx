@@ -29,12 +29,7 @@ export default function NotificationContainer() {
 
     return (
         <div
-            className={`notification-container${
-                options.position === "bottom-left" ||
-                options.position === "bottom-right"
-                    ? " reverse"
-                    : ""
-            }`}
+            className={`notification-container ${options.position}`}
             style={getPositionStyles(options.position)}
         >
             {notifications.map(({ msg_id, msg }) => (

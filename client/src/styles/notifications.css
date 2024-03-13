@@ -7,7 +7,13 @@
     gap: 0.5rem;
 }
 
-.notification-container.reverse {
+.notification-container.top-left,
+.notification-container.top-right {
+    flex-direction: column;
+}
+
+.notification-container.bottom-left,
+.notification-container.bottom-right {
     flex-direction: column-reverse;
 }
 
@@ -22,6 +28,16 @@
     font-size: 0.8175rem;
     font-weight: 500;
     transition: border 0.1s;
+}
+
+.notification-container.top-left .notification,
+.notification-container.bottom-left .notification {
+    animation: 0.5s ease-in-out 0s slide-in-left;
+}
+
+.notification-container.top-right .notification,
+.notification-container.bottom-right .notification {
+    animation: 0.5s ease-in-out 0s slide-in-right;
 }
 
 .notification:hover {
