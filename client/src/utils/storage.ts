@@ -1,8 +1,10 @@
 import type { Notification, NotificationOptions } from "../types";
 
-export function loadNotificationOptions(): NotificationOptions | null {
+export function loadNotificationOptions(
+    defaultOptions: NotificationOptions
+): NotificationOptions {
     const options = localStorage.getItem("notification-options");
-    return options && JSON.parse(options);
+    return options ? JSON.parse(options) : defaultOptions;
 }
 
 export function saveNotificationOptions(options: NotificationOptions) {

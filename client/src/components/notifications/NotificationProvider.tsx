@@ -20,6 +20,12 @@ type Action =
     | { type: "PRESERVE_NOTIFICATION"; payload: string }
     | { type: "UPDATE_OPTIONS"; payload: NotificationOptions };
 
+const DEFAULT_OPTIONS: NotificationOptions = {
+    count: 3,
+    position: "top-right",
+    duration: 2,
+};
+
 const timeouts = new Map<string, number>();
 
 const reducer = (state: State, action: Action) => {
@@ -70,15 +76,19 @@ const reducer = (state: State, action: Action) => {
     }
 };
 
-const DEFAULT_OPTIONS: NotificationOptions = {
-    count: 3,
-    position: "top-right",
-    duration: 2,
-};
+const existingOptions = loadNotificationOptions(DEFAULT_OPTIONS);
+
+// remove notifications that have expired
+const existingNotifications = loadNotifications().filter(({ time }) => {
+    const now = Math.floor(Date.now() / 1000);
+    const createdAt = new Date(time).getTime();
+    return now - createdAt < existingOptions.duration;
+});
+saveNotifications(existingNotifications);
 
 const initialState: State = {
-    notifications: loadNotifications(),
-    options: loadNotificationOptions() || DEFAULT_OPTIONS,
+    notifications: existingNotifications,
+    options: existingOptions,
 };
 
 const NotificationsContext = createContext<{
