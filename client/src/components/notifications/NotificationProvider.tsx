@@ -1,4 +1,10 @@
 import { createContext, useContext, useReducer } from "react";
+import {
+    loadNotificationOptions,
+    loadNotifications,
+    saveNotificationOptions,
+    saveNotifications,
+} from "../../utils/storage";
 import type { Notification, NotificationOptions } from "../../types";
 import NotificationContainer from "./NotificationContainer";
 
@@ -16,23 +22,32 @@ const timeouts = new Map<string, number>();
 
 const reducer = (state: State, action: Action) => {
     switch (action.type) {
-        case "ADD_NOTIFICATION":
+        case "ADD_NOTIFICATION": {
+            // show the most recent `count` notifications
+            const notifications = [
+                ...state.notifications,
+                action.payload,
+            ].slice(-state.options.count);
+
+            saveNotifications(notifications);
             return {
                 ...state,
-                // show the most recent `count` notifications
-                notifications: [action.payload, ...state.notifications].slice(
-                    0,
-                    state.options.count
-                ),
+                notifications,
             };
-        case "REMOVE_NOTIFICATION":
+        }
+        case "REMOVE_NOTIFICATION": {
+            const notifications = state.notifications.filter(
+                (notification) => notification.msg_id !== action.payload
+            );
+
+            saveNotifications(notifications);
             return {
                 ...state,
-                notifications: state.notifications.filter(
-                    (notification) => notification.msg_id !== action.payload
-                ),
+                notifications,
             };
+        }
         case "UPDATE_OPTIONS":
+            saveNotificationOptions(action.payload);
             return {
                 ...state,
                 options: action.payload,
@@ -49,8 +64,8 @@ const DEFAULT_OPTIONS: NotificationOptions = {
 };
 
 const initialState: State = {
-    notifications: [],
-    options: DEFAULT_OPTIONS,
+    notifications: loadNotifications(),
+    options: loadNotificationOptions() || DEFAULT_OPTIONS,
 };
 
 const NotificationsContext = createContext<{
