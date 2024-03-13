@@ -103,11 +103,19 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
     const notification = useSSE<Notification>(SERVER_ENDPOINT);
     const [state, dispatch] = useReducer(reducer, initialState);
 
+    const dispatchAndBroadcast = (action: Action) => {
+        dispatch(action);
+        broadcast(action);
+    };
+
     const addToClearQueue = (id: string) => {
         timeouts.set(
             id,
             setTimeout(() => {
-                dispatch({ type: "REMOVE_NOTIFICATION", payload: id });
+                dispatchAndBroadcast({
+                    type: "REMOVE_NOTIFICATION",
+                    payload: id,
+                });
             }, state.options.duration * 1000)
         );
     };
@@ -142,10 +150,7 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
         <NotificationsContext.Provider
             value={{
                 ...state,
-                dispatch: (action: Action) => {
-                    dispatch(action);
-                    broadcast(action);
-                },
+                dispatch: dispatchAndBroadcast,
                 addToClearQueue,
             }}
         >
