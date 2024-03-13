@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 import {
     loadNotificationOptions,
     loadNotifications,
@@ -106,14 +106,23 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
         }
     };
 
-    const eventSource = new EventSource(SERVER_ENDPOINT);
-    eventSource.onmessage = (event) => {
-        const notification = JSON.parse(event.data) as Notification;
-        dispatch({ type: "ADD_NOTIFICATION", payload: notification });
+    useEffect(() => {
+        // listen for notifications from the server
+        const eventSource = new EventSource(SERVER_ENDPOINT);
+        eventSource.onmessage = (event) => {
+            const notification = JSON.parse(event.data) as Notification;
 
-        // remove the notification after `duration` seconds
-        addToClearQueue(notification.msg_id);
-    };
+            dispatch({ type: "ADD_NOTIFICATION", payload: notification });
+
+            // remove the notification after `duration` seconds
+            addToClearQueue(notification.msg_id);
+        };
+
+        // clean up
+        return () => {
+            eventSource.close();
+        };
+    }, []);
 
     return (
         <NotificationsContext.Provider
