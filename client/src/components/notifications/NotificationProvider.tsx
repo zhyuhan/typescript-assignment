@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useReducer } from "react";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useReducer,
+    useState,
+} from "react";
 import {
     loadNotificationOptions,
     loadNotifications,
@@ -99,6 +105,7 @@ const SERVER_ENDPOINT = "http://localhost:9000/events";
 
 export function NotificationProvider({ children }: NotificationsProviderProps) {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const [channel, setChannel] = useState<BroadcastChannel | null>(null);
 
     const addToClearQueue = (id: string) => {
         timeouts.set(
@@ -110,12 +117,30 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
     };
 
     useEffect(() => {
+        // set up a broadcast channel to communicate between tabs
+        const bc = new BroadcastChannel("notifications");
+        bc.onmessage = (event) => {
+            const action = event.data as Action;
+            dispatch(action);
+
+            if (action.type === "ADD_NOTIFICATION") {
+                const notification = action.payload as Notification;
+                addToClearQueue(notification.msg_id);
+            }
+        };
+        setChannel(bc);
+
         // listen for notifications from the server
         const eventSource = new EventSource(SERVER_ENDPOINT);
         eventSource.onmessage = (event) => {
             const notification = JSON.parse(event.data) as Notification;
 
             dispatch({ type: "ADD_NOTIFICATION", payload: notification });
+            // broadcast the notification to other tabs
+            bc.postMessage({
+                type: "ADD_NOTIFICATION",
+                payload: notification,
+            });
 
             // remove the notification after `duration` seconds
             addToClearQueue(notification.msg_id);
@@ -124,6 +149,7 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
         // clean up
         return () => {
             eventSource.close();
+            bc.close();
         };
     }, []);
 
@@ -131,7 +157,10 @@ export function NotificationProvider({ children }: NotificationsProviderProps) {
         <NotificationsContext.Provider
             value={{
                 ...state,
-                dispatch,
+                dispatch: (action: Action) => {
+                    dispatch(action);
+                    channel?.postMessage(action);
+                },
                 addToClearQueue,
             }}
         >
