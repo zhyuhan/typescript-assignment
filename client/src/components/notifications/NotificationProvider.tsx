@@ -1,4 +1,9 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
+import {
+    BROADCAST_CHANNEL,
+    SERVER_ENDPOINT,
+    DEFAULT_NOTIFICATION_OPTIONS,
+} from "../../config";
 import { useBroadcast, useSSE } from "../../utils/hooks";
 import {
     loadNotificationOptions,
@@ -19,12 +24,6 @@ type Action =
     | { type: "REMOVE_NOTIFICATION"; payload: string }
     | { type: "PRESERVE_NOTIFICATION"; payload: string }
     | { type: "UPDATE_OPTIONS"; payload: NotificationOptions };
-
-const DEFAULT_OPTIONS: NotificationOptions = {
-    count: 3,
-    position: "top-right",
-    duration: 2,
-};
 
 const timeouts = new Map<string, number>();
 
@@ -93,7 +92,7 @@ const reducer = (state: State, action: Action) => {
     }
 };
 
-const existingOptions = loadNotificationOptions(DEFAULT_OPTIONS);
+const existingOptions = loadNotificationOptions(DEFAULT_NOTIFICATION_OPTIONS);
 
 // remove notifications that have expired
 const existingNotifications = loadNotifications().filter(({ time }) => {
@@ -123,10 +122,8 @@ interface NotificationsProviderProps {
     children: React.ReactNode;
 }
 
-const SERVER_ENDPOINT = "http://localhost:9000/events";
-
 export function NotificationProvider({ children }: NotificationsProviderProps) {
-    const { message, broadcast } = useBroadcast<Action>("notifications");
+    const { message, broadcast } = useBroadcast<Action>(BROADCAST_CHANNEL);
     const notification = useSSE<Notification>(SERVER_ENDPOINT);
     const [state, dispatch] = useReducer(reducer, initialState);
 
