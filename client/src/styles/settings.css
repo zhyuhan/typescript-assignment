@@ -1,4 +1,5 @@
 .settings {
+    max-width: 80%;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -22,19 +23,20 @@
     padding: 1rem;
 }
 
-fieldset.value {
+#notification-position.value {
     border: none;
     margin: 0;
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
     align-items: center;
 }
 
-fieldset.value label {
+#notification-position.value label {
     padding: 0;
 }
 
-fieldset.value input {
+#notification-position.value input {
     margin: 0;
 }
 
